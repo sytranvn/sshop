@@ -1,1 +1,3 @@
-# Template CMake for C/C++ mini project
+# SSHop
+
+The shop you can not find any where else on earth.
