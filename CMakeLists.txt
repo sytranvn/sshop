@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17) # Enable cpp17
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CLIENT_EXE "${PROJECT_NAME}-client")
+set(SERVER_EXE "${PROJECT_NAME}-server")
 # add_subdirectory(lib)
 # include_directories(lib)
 
@@ -16,4 +17,6 @@ link_directories(${LIBSSH_LIBRARY_DIRS})
 add_executable(${CLIENT_EXE} client.c)
 target_link_libraries(${CLIENT_EXE} ${LIBSSH_LIBRARIES})
 
+add_executable(${SERVER_EXE} server.c)
+target_link_libraries(${SERVER_EXE} ${LIBSSH_LIBRARIES})
 # include_directories(tests)

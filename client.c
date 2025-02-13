@@ -15,10 +15,11 @@ main ()
 {
   const char *host = "localhost";
   int port = 22;
-  int verbosity = SSH_LOG_DEBUG;
+  int verbosity = SSH_LOG_PROTOCOL;
+  int ec = EXIT_FAILURE;
   ssh_session session = ssh_new ();
   if (session == NULL)
-    exit (EXIT_FAILURE);
+    exit(ec);
 
   ssh_options_set (session, SSH_OPTIONS_HOST, host);
   ssh_options_set (session, SSH_OPTIONS_PORT, &port);
@@ -31,14 +32,14 @@ main ()
     {
       fprintf (stderr, "Error connecting to %s: %s\n", host,
                ssh_get_error (session));
-      exit (rc);
+      exit (ec);
     }
 
   if (verify_knownhost (session) < 0)
     {
       ssh_disconnect (session);
       ssh_free (session);
-      exit (-1);
+      exit (ec);
     }
 
   char *password;
@@ -50,7 +51,7 @@ main ()
                ssh_get_error (session));
       ssh_disconnect (session);
       ssh_free (session);
-      exit (-1);
+      exit (ec);
     }
   
   show_remote_prcesses(session);
@@ -153,13 +154,13 @@ int
 show_remote_prcesses (ssh_session session)
 {
   ssh_channel channel;
-  int rc;
+  int rc = SSH_ERROR;
   char buffer[256];
   int nbytes;
 
   channel = ssh_channel_new (session);
   if (channel == NULL)
-    return SSH_ERROR;
+    return rc;
 
   rc = ssh_channel_open_session (channel);
   if (rc != SSH_OK)
@@ -170,31 +171,22 @@ show_remote_prcesses (ssh_session session)
 
   rc = ssh_channel_request_exec (channel, "ps aux");
   if (rc != SSH_OK)
-    {
-      ssh_channel_close (channel);
-      ssh_channel_free (channel);
-      return rc;
-    }
+    goto out;
 
   nbytes = ssh_channel_read (channel, buffer, sizeof (buffer), 0);
   while (nbytes > 0)
     {
       if (write(1, buffer, nbytes) != (unsigned int)nbytes)
-        {
-          ssh_channel_close (channel);
-          ssh_channel_free (channel);
-          return SSH_ERROR;
-        }
+        goto out;
       nbytes = ssh_channel_read (channel, buffer, sizeof (buffer), 0);
     }
   if (nbytes < 0)
-    {
-      ssh_channel_close (channel);
-      ssh_channel_free (channel);
-      return SSH_ERROR;
-    }
+    goto out;
+
   ssh_channel_send_eof (channel);
+
+out:
   ssh_channel_close (channel);
   ssh_channel_free (channel);
-  return SSH_OK;
+  return rc;
 }
