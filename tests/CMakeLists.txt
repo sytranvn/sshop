@@ -1,27 +1,18 @@
-include(FetchContent)
-FetchContent_Declare(gtest
-	QUIET
-	URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
-)
-# configure build of googletest
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(gtest)
+if (UNIT_TESTING)
+    find_package(CMocka REQUIRED)
+endif ()
 
-# file(READ resources/4.txt FILE_4_CONTENT)
-# configure_file(ch_4_test.in.cpp ch_4_test.cpp @ONLY)
+enable_testing()
+include(CTest)
 
+foreach(_UNIT_TEST ${LIBSSH_UNIT_TESTS})
+    add_cmocka_test(${_UNIT_TEST}
+                    SOURCES ${_UNIT_TEST}.c
+                    COMPILE_OPTIONS ${DEFAULT_C_COMPILE_FLAGS}
+                    LINK_LIBRARIES ${TEST_TARGET_LIBRARIES}
+    )
 
-add_executable(
-unit_tests
-# common_test.cpp
-)
-
-# automatic discovery of unit tests
-include(GoogleTest)
-gtest_discover_tests(unit_tests
-	PROPERTIES
-	LABELS "unit"
-	DISCOVERY_TIMEOUT  # how long to wait (in seconds) before crashing
-	240
-)
+    set_property(TEST ${_UNIT_TEST}
+                 PROPERTY
+                     ENVIRONMENT ${TORTURE_UNIT_ENVIRONMENT})
+endforeach()
